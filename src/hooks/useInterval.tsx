@@ -92,7 +92,7 @@ const useInterval = (
 
   const restart = useCallback(() => {
     stop();
-    start();
+    setTimeout(() => start(), 0);
   }, [start, stop]);
 
   // Handle immediate start
