@@ -101,15 +101,12 @@ const useInterval = (
     if (immediate && delay !== null) {
       start();
     }
-    return stop;
-  }, [immediate, delay, start, stop]);
+  }, [immediate, delay]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      stop();
     };
   }, []);
 
