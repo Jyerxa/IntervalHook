@@ -1,31 +1,33 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef} from 'react';
 
 const useIntervalHook: () => { stop: () => void; start: () => void } = () => {
     const knownMethod = () => {
         console.log('hook triggered');
     }
-    const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+    const intervalIdRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const start = () => {
-        const id = setInterval(knownMethod, 1000);
-        setIntervalId(id);
+        if (intervalIdRef.current !== null) {
+            return;
+        }
+        intervalIdRef.current = setInterval(knownMethod, 1000);
     };
 
     const stop = () => {
-        if(intervalId) {
-            clearInterval(intervalId);
-            setIntervalId(null);
+        if (intervalIdRef.current !== null) {
+            clearInterval(intervalIdRef.current);
+            intervalIdRef.current = null;
         }
     };
 
     // Clean up on unmount.
     useEffect(() => {
         return () => {
-            if(intervalId) {
-                clearInterval(intervalId);
+            if (intervalIdRef.current !== null) {
+                clearInterval(intervalIdRef.current);
             }
         };
-    }, [intervalId]);
+    }, []);
 
     return { start, stop };
 };
