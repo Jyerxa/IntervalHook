@@ -4,9 +4,12 @@ const useIntervalHook: () => { stop: () => void; start: () => void } = () => {
     const knownMethod = () => {
         console.log('hook triggered');
     }
-    const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+    const [intervalId, setIntervalId] = useState<ReturnType<typeof setInterval> | null>(null);
 
     const start = () => {
+        if (intervalId) {
+            return;
+        }
         const id = setInterval(knownMethod, 1000);
         setIntervalId(id);
     };
