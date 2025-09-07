@@ -23,7 +23,7 @@ const App = () => {
         stop: stopFast, 
         isActive: isFastActive 
     } = useInterval(
-        () => console.log('Fast interval triggered'),
+        () => setMessage(prev => prev + ' [Fast tick]'),
         500,
         { executeImmediately: true }
     );
@@ -58,7 +58,7 @@ const App = () => {
             {/* Fast Interval Example */}
             <div>
                 <h4>Fast Interval Example (0.5 second interval)</h4>
-                <p>Check console for logs</p>
+                <p>Adds "[Fast tick]" to the message when active</p>
                 <p>Status: {isFastActive ? '🟢 Active' : '🔴 Stopped'}</p>
                 
                 <div style={{ marginTop: '10px' }}>

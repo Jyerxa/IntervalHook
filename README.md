@@ -1,36 +1,252 @@
-# Interval Hook
-A quick implementation of a hook which will invoke a 
-method on an interval 
+# useInterval Hook
+
+A flexible and robust React hook for managing intervals with TypeScript support. This hook provides a clean API for starting, stopping, and restarting intervals with automatic cleanup and customizable behavior.
+
+## Features
+
+- 🚀 **Easy to use**: Simple API with start, stop, and restart functions
+- 🔄 **Automatic cleanup**: Intervals are automatically cleared on component unmount
+- ⚡ **Flexible options**: Support for immediate start and immediate execution
+- 🎯 **TypeScript support**: Full type safety with comprehensive TypeScript definitions
+- 🧪 **Well tested**: Comprehensive test coverage with Jest and React Testing Library
+- 🔧 **Customizable**: Configurable delay and execution behavior
+
+## Installation
+
+This project was bootstrapped with Create React App. To get started:
+
+```bash
+npm install
+npm start
+```
+
+## API Reference
+
+### `useInterval(callback, delay, options?)`
+
+#### Parameters
+
+- **`callback`** (`() => void`): The function to execute on each interval
+- **`delay`** (`number | null`): The delay between executions in milliseconds. Pass `null` to disable the interval
+- **`options`** (`UseIntervalOptions`): Optional configuration object
+
+#### Options
+
+```typescript
+interface UseIntervalOptions {
+  /**
+   * Whether to start the interval immediately when the hook is called
+   * @default false
+   */
+  immediate?: boolean;
+  
+  /**
+   * Whether to execute the callback immediately when starting the interval
+   * @default false
+   */
+  executeImmediately?: boolean;
+}
+```
+
+#### Returns
+
+```typescript
+interface UseIntervalReturn {
+  /**
+   * Start the interval
+   */
+  start: () => void;
+  
+  /**
+   * Stop the interval
+   */
+  stop: () => void;
+  
+  /**
+   * Restart the interval (stop and start again)
+   */
+  restart: () => void;
+  
+  /**
+   * Whether the interval is currently active
+   */
+  isActive: boolean;
+}
+```
+
+## Usage Examples
+
+### Basic Usage
+
+```tsx
+import React, { useState } from 'react';
+import useInterval from './hooks/useInterval';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  
+  const { start, stop, isActive } = useInterval(
+    () => setCount(prev => prev + 1),
+    1000
+  );
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={start} disabled={isActive}>
+        Start
+      </button>
+      <button onClick={stop} disabled={!isActive}>
+        Stop
+      </button>
+    </div>
+  );
+}
+```
+
+### Auto-start with Immediate Execution
+
+```tsx
+import React, { useState } from 'react';
+import useInterval from './hooks/useInterval';
+
+function AutoCounter() {
+  const [count, setCount] = useState(0);
+  
+  const { stop, isActive } = useInterval(
+    () => setCount(prev => prev + 1),
+    1000,
+    { 
+      immediate: true,           // Start immediately
+      executeImmediately: true   // Execute callback right away
+    }
+  );
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <p>Status: {isActive ? 'Running' : 'Stopped'}</p>
+      <button onClick={stop}>Stop</button>
+    </div>
+  );
+}
+```
+
+### Dynamic Interval Control
+
+```tsx
+import React, { useState } from 'react';
+import useInterval from './hooks/useInterval';
+
+function DynamicInterval() {
+  const [count, setCount] = useState(0);
+  const [delay, setDelay] = useState(1000);
+  
+  const { start, stop, restart, isActive } = useInterval(
+    () => setCount(prev => prev + 1),
+    delay
+  );
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <input 
+        type="number" 
+        value={delay} 
+        onChange={(e) => setDelay(Number(e.target.value))}
+        placeholder="Delay in ms"
+      />
+      <div>
+        <button onClick={start} disabled={isActive}>Start</button>
+        <button onClick={stop} disabled={!isActive}>Stop</button>
+        <button onClick={restart}>Restart</button>
+      </div>
+    </div>
+  );
+}
+```
+
+### Conditional Intervals
+
+```tsx
+import React, { useState } from 'react';
+import useInterval from './hooks/useInterval';
+
+function ConditionalInterval() {
+  const [count, setCount] = useState(0);
+  const [enabled, setEnabled] = useState(true);
+  
+  const { isActive } = useInterval(
+    () => setCount(prev => prev + 1),
+    enabled ? 1000 : null,  // Pass null to disable
+    { immediate: true }
+  );
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <label>
+        <input 
+          type="checkbox" 
+          checked={enabled} 
+          onChange={(e) => setEnabled(e.target.checked)}
+        />
+        Enable interval
+      </label>
+      <p>Status: {isActive ? 'Active' : 'Inactive'}</p>
+    </div>
+  );
+}
+```
+
+## Key Features & Behavior
+
+### Automatic Cleanup
+The hook automatically cleans up intervals when the component unmounts, preventing memory leaks.
+
+### Callback Ref Pattern
+The hook uses a ref to store the latest callback, ensuring that interval callbacks always use the most recent version without restarting the interval.
+
+### Restart Functionality
+The `restart` function stops the current interval and immediately starts a new one, useful for resetting the timing.
+
+### Null Delay Handling
+Passing `null` as the delay disables the interval entirely, making it easy to conditionally enable/disable intervals.
 
 ## Available Scripts
 
-In the project directory, you can run:
-
 ### `npm start`
+Runs the demo app in development mode at [http://localhost:3000](http://localhost:3000).
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### `npm test`
+Runs the test suite with comprehensive coverage for the useInterval hook.
 
 ### `npm run build`
+Builds the app for production to the `build` folder.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Testing
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The hook includes comprehensive tests covering:
+- Basic start/stop functionality
+- Immediate execution options
+- Callback updates without restart
+- Cleanup on unmount
+- Multiple start/stop cycles
+- Null delay handling
+- Restart functionality
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Run tests with:
+```bash
+npm test
+```
 
-### `npm run eject`
+## Browser Support
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+This hook works in all modern browsers that support React 18+ and the following APIs:
+- `setInterval` / `clearInterval`
+- `useEffect`, `useCallback`, `useRef` (React hooks)
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## License
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+This project is licensed under the MIT License.
 

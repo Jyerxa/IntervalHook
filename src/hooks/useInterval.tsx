@@ -67,7 +67,7 @@ const useInterval = (
 
   const start = useCallback(() => {
     // Don't start if already active or delay is null
-    if (isActive || delay === null) return;
+    if (intervalRef.current !== null || delay === null) return;
 
     // Execute immediately if requested
     if (executeImmediately) {
@@ -80,7 +80,7 @@ const useInterval = (
     }, delay);
 
     setIsActive(true);
-  }, [delay, executeImmediately, isActive]);
+  }, [delay, executeImmediately]);
 
   const stop = useCallback(() => {
     if (intervalRef.current) {
@@ -92,7 +92,6 @@ const useInterval = (
 
   const restart = useCallback(() => {
     stop();
-    // Use setTimeout to ensure stop completes before start
     setTimeout(() => start(), 0);
   }, [start, stop]);
 
@@ -101,14 +100,12 @@ const useInterval = (
     if (immediate && delay !== null) {
       start();
     }
-  }, [immediate, delay]);
+  }, [immediate, delay, start]);
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      stop();
-    };
-  }, []);
+    return stop;
+  }, [stop]);
 
   return { start, stop, restart, isActive };
 };
