@@ -8,8 +8,11 @@ const App = () => {
     // Example 1: Basic counter with custom callback
     const { start, stop, restart, isActive } = useInterval(
         () => {
-            setCount(prev => prev + 1);
-            setMessage(`Hook triggered ${count + 1} times`);
+            setCount(prev => {
+                const newCount = prev + 1;
+                setMessage(`Hook triggered ${newCount} times`);
+                return newCount;
+            });
         },
         1000
     );
