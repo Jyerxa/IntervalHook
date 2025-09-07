@@ -22,44 +22,46 @@ const useIntervalHook = ({ callback, delay, autoStart = false }: UseIntervalOpti
     }, [callback]);
 
     const start = useCallback(() => {
-        // Prevent multiple intervals
-        if (intervalId) {
-            return;
-        }
+        setIntervalId((currentId) => {
+            // Prevent multiple intervals
+            if (currentId) {
+                return currentId;
+            }
 
-        const id = setInterval(() => {
-            savedCallback.current?.();
-        }, delay);
-        setIntervalId(id);
-    }, [delay, intervalId]);
+            const id = setInterval(() => {
+                savedCallback.current?.();
+            }, delay);
+            return id;
+        });
+    }, [delay]);
 
     const stop = useCallback(() => {
-        if(intervalId) {
-            clearInterval(intervalId);
-            setIntervalId(null);
-        }
-    }, [intervalId]);
+        setIntervalId((currentId) => {
+            if (currentId) {
+                clearInterval(currentId);
+            }
+            return null;
+        });
+    }, []);
 
     // Auto-start if requested
     useEffect(() => {
         if (autoStart) {
             start();
         }
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-        };
-    }, [autoStart]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [autoStart, start]);
 
     // Clean up on unmount
     useEffect(() => {
         return () => {
-            if(intervalId) {
-                clearInterval(intervalId);
-            }
+            setIntervalId((currentId) => {
+                if (currentId) {
+                    clearInterval(currentId);
+                }
+                return null;
+            });
         };
-    }, [intervalId]);
+    }, []);
 
     return { 
         start, 
