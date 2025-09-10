@@ -23,6 +23,14 @@ export interface UseIntervalReturn {
    */
   stop: () => void;
   /**
+   * Pause the interval (can be resumed)
+   */
+  pause: () => void;
+  /**
+   * Resume a paused interval
+   */
+  resume: () => void;
+  /**
    * Restart the interval (stop and start again)
    */
   restart: () => void;
@@ -30,6 +38,10 @@ export interface UseIntervalReturn {
    * Whether the interval is currently active
    */
   isActive: boolean;
+  /**
+   * Whether the interval is paused
+   */
+  isPaused: boolean;
 }
 
 /**
@@ -59,6 +71,8 @@ const useInterval = (
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const callbackRef = useRef(callback);
   const [isActive, setIsActive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const pausedCallbackRef = useRef<(() => void) | null>(null);
 
   // Update callback ref when callback changes
   useEffect(() => {
@@ -80,20 +94,58 @@ const useInterval = (
     }, delay);
 
     setIsActive(true);
+    setIsPaused(false);
   }, [delay, executeImmediately]);
 
   const stop = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
-      setIsActive(false);
     }
+    // Always reset states when stopping, even if paused
+    setIsActive(false);
+    setIsPaused(false);
+    pausedCallbackRef.current = null;
   }, []);
 
+  const pause = useCallback(() => {
+    if (intervalRef.current && !isPaused) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      setIsPaused(true);
+      // Store the callback for resume
+      pausedCallbackRef.current = callbackRef.current;
+    }
+  }, [isPaused]);
+
+  const resume = useCallback(() => {
+    if (isPaused && delay !== null) {
+      // Set up the interval again
+      intervalRef.current = setInterval(() => {
+        callbackRef.current();
+      }, delay);
+      setIsPaused(false);
+    }
+  }, [isPaused, delay]);
+
   const restart = useCallback(() => {
-    stop();
-    setTimeout(() => start(), 0);
-  }, [start, stop]);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsActive(false);
+    setIsPaused(false);
+    // Start immediately without setTimeout to avoid race condition
+    if (delay !== null) {
+      if (executeImmediately) {
+        callbackRef.current();
+      }
+      intervalRef.current = setInterval(() => {
+        callbackRef.current();
+      }, delay);
+      setIsActive(true);
+    }
+  }, [delay, executeImmediately]);
 
   // Handle immediate start
   useEffect(() => {
@@ -107,7 +159,7 @@ const useInterval = (
     return stop;
   }, [stop]);
 
-  return { start, stop, restart, isActive };
+  return { start, stop, pause, resume, restart, isActive, isPaused };
 };
 
 export default useInterval;

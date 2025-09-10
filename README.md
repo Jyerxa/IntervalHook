@@ -4,7 +4,8 @@ A flexible and robust React hook for managing intervals with TypeScript support.
 
 ## Features
 
-- 🚀 **Easy to use**: Simple API with start, stop, and restart functions
+- 🚀 **Easy to use**: Simple API with start, stop, pause, resume, and restart functions
+- ⏸️ **Pause/Resume**: Pause intervals and resume them later without losing state
 - 🔄 **Automatic cleanup**: Intervals are automatically cleared on component unmount
 - ⚡ **Flexible options**: Support for immediate start and immediate execution
 - 🎯 **TypeScript support**: Full type safety with comprehensive TypeScript definitions
@@ -63,6 +64,16 @@ interface UseIntervalReturn {
   stop: () => void;
   
   /**
+   * Pause the interval (can be resumed)
+   */
+  pause: () => void;
+  
+  /**
+   * Resume a paused interval
+   */
+  resume: () => void;
+  
+  /**
    * Restart the interval (stop and start again)
    */
   restart: () => void;
@@ -71,6 +82,11 @@ interface UseIntervalReturn {
    * Whether the interval is currently active
    */
   isActive: boolean;
+  
+  /**
+   * Whether the interval is paused
+   */
+  isPaused: boolean;
 }
 ```
 
@@ -85,7 +101,7 @@ import useInterval from './hooks/useInterval';
 function Counter() {
   const [count, setCount] = useState(0);
   
-  const { start, stop, isActive } = useInterval(
+  const { start, stop, pause, resume, isActive, isPaused } = useInterval(
     () => setCount(prev => prev + 1),
     1000
   );
@@ -93,11 +109,18 @@ function Counter() {
   return (
     <div>
       <p>Count: {count}</p>
-      <button onClick={start} disabled={isActive}>
+      <p>Status: {isActive ? (isPaused ? 'Paused' : 'Running') : 'Stopped'}</p>
+      <button onClick={start} disabled={isActive && !isPaused}>
         Start
       </button>
       <button onClick={stop} disabled={!isActive}>
         Stop
+      </button>
+      <button onClick={pause} disabled={!isActive || isPaused}>
+        Pause
+      </button>
+      <button onClick={resume} disabled={!isPaused}>
+        Resume
       </button>
     </div>
   );
@@ -127,6 +150,52 @@ function AutoCounter() {
       <p>Count: {count}</p>
       <p>Status: {isActive ? 'Running' : 'Stopped'}</p>
       <button onClick={stop}>Stop</button>
+    </div>
+  );
+}
+```
+
+### Pause and Resume Example
+
+```tsx
+import React, { useState } from 'react';
+import useInterval from './hooks/useInterval';
+
+function TimerWithPause() {
+  const [seconds, setSeconds] = useState(0);
+  
+  const { start, stop, pause, resume, restart, isActive, isPaused } = useInterval(
+    () => setSeconds(prev => prev + 1),
+    1000
+  );
+
+  const formatTime = (secs: number) => {
+    const mins = Math.floor(secs / 60);
+    const remainingSecs = secs % 60;
+    return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div>
+      <h2>{formatTime(seconds)}</h2>
+      <div>
+        {!isActive && (
+          <button onClick={start}>Start Timer</button>
+        )}
+        {isActive && !isPaused && (
+          <button onClick={pause}>Pause</button>
+        )}
+        {isPaused && (
+          <button onClick={resume}>Resume</button>
+        )}
+        {isActive && (
+          <>
+            <button onClick={stop}>Stop</button>
+            <button onClick={restart}>Restart</button>
+          </>
+        )}
+      </div>
+      <p>Status: {!isActive ? 'Ready' : isPaused ? 'Paused' : 'Running'}</p>
     </div>
   );
 }
@@ -201,6 +270,9 @@ function ConditionalInterval() {
 
 ## Key Features & Behavior
 
+### Pause/Resume Support
+The hook provides pause and resume functionality, allowing you to temporarily stop the interval while maintaining its state. When resumed, the interval continues from where it was paused.
+
 ### Automatic Cleanup
 The hook automatically cleans up intervals when the component unmounts, preventing memory leaks.
 
@@ -208,7 +280,7 @@ The hook automatically cleans up intervals when the component unmounts, preventi
 The hook uses a ref to store the latest callback, ensuring that interval callbacks always use the most recent version without restarting the interval.
 
 ### Restart Functionality
-The `restart` function stops the current interval and immediately starts a new one, useful for resetting the timing.
+The `restart` function stops the current interval and immediately starts a new one, useful for resetting the timing. The restart now works synchronously without race conditions.
 
 ### Null Delay Handling
 Passing `null` as the delay disables the interval entirely, making it easy to conditionally enable/disable intervals.
@@ -228,12 +300,14 @@ Builds the app for production to the `build` folder.
 
 The hook includes comprehensive tests covering:
 - Basic start/stop functionality
+- Pause and resume functionality
 - Immediate execution options
 - Callback updates without restart
 - Cleanup on unmount
 - Multiple start/stop cycles
 - Null delay handling
-- Restart functionality
+- Restart functionality (now fixed to work synchronously)
+- Stop behavior while paused
 
 Run tests with:
 ```bash
