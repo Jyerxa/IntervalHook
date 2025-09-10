@@ -116,6 +116,7 @@ describe('useInterval', () => {
       result.current.restart();
     });
 
+    // Now restart works synchronously, so isActive should be true immediately
     expect(result.current.isActive).toBe(true);
 
     // Should reset the timer
@@ -341,6 +342,111 @@ describe('useInterval', () => {
     });
 
     // Should be called again after interval
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it('should pause and resume interval correctly', () => {
+    const callback = jest.fn();
+    const { result } = renderHook(() => useInterval(callback, 1000));
+
+    act(() => {
+      result.current.start();
+    });
+
+    expect(result.current.isActive).toBe(true);
+    expect(result.current.isPaused).toBe(false);
+
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    // Pause the interval
+    act(() => {
+      result.current.pause();
+    });
+
+    expect(result.current.isActive).toBe(true);
+    expect(result.current.isPaused).toBe(true);
+
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+
+    // Should not call callback while paused
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    // Resume the interval
+    act(() => {
+      result.current.resume();
+    });
+
+    expect(result.current.isActive).toBe(true);
+    expect(result.current.isPaused).toBe(false);
+
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    // Should call callback again after resume
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it('should not pause if not active', () => {
+    const callback = jest.fn();
+    const { result } = renderHook(() => useInterval(callback, 1000));
+
+    act(() => {
+      result.current.pause();
+    });
+
+    expect(result.current.isPaused).toBe(false);
+  });
+
+  it('should handle stop while paused', () => {
+    const callback = jest.fn();
+    const { result } = renderHook(() => useInterval(callback, 1000));
+
+    act(() => {
+      result.current.start();
+    });
+
+    act(() => {
+      result.current.pause();
+    });
+
+    expect(result.current.isPaused).toBe(true);
+
+    act(() => {
+      result.current.stop();
+    });
+
+    expect(result.current.isActive).toBe(false);
+    expect(result.current.isPaused).toBe(false);
+  });
+
+  it('should restart with executeImmediately option', () => {
+    const callback = jest.fn();
+    const { result } = renderHook(() => 
+      useInterval(callback, 1000, { executeImmediately: true })
+    );
+
+    act(() => {
+      result.current.start();
+    });
+
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    act(() => {
+      result.current.restart();
+    });
+
+    // Should execute immediately on restart
     expect(callback).toHaveBeenCalledTimes(2);
   });
 });

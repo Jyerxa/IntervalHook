@@ -6,7 +6,7 @@ const App = () => {
     const [message, setMessage] = useState('');
 
     // Example 1: Basic counter with custom callback
-    const { start, stop, restart, isActive } = useInterval(
+    const { start, stop, pause, resume, restart, isActive, isPaused } = useInterval(
         () => {
             setCount(prev => {
                 const newCount = prev + 1;
@@ -37,14 +37,20 @@ const App = () => {
                 <h4>Counter Example (1 second interval)</h4>
                 <p>Count: {count}</p>
                 <p>{message}</p>
-                <p>Status: {isActive ? '🟢 Active' : '🔴 Stopped'}</p>
+                <p>Status: {isActive ? (isPaused ? '⏸️ Paused' : '🟢 Active') : '🔴 Stopped'}</p>
                 
                 <div style={{ marginTop: '10px' }}>
-                    <button onClick={start} disabled={isActive} style={{ marginRight: '10px' }}>
+                    <button onClick={start} disabled={isActive && !isPaused} style={{ marginRight: '10px' }}>
                         Start
                     </button>
                     <button onClick={stop} disabled={!isActive} style={{ marginRight: '10px' }}>
                         Stop
+                    </button>
+                    <button onClick={pause} disabled={!isActive || isPaused} style={{ marginRight: '10px' }}>
+                        Pause
+                    </button>
+                    <button onClick={resume} disabled={!isPaused} style={{ marginRight: '10px' }}>
+                        Resume
                     </button>
                     <button onClick={restart} style={{ marginRight: '10px' }}>
                         Restart
